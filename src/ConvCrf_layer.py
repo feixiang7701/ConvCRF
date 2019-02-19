@@ -33,7 +33,6 @@ def _negative(dz):
     else:
         return -dz
 
-#Gauss_line initial
 
 
 class ConvCRF(Layer):
@@ -82,7 +81,6 @@ class ConvCRF(Layer):
                                                     initializer=_potts_model_initializer,
                                                     trainable=True)
 
-        # Weights of
         super(ConvCRF, self).build(input_shape)
 
     def _create_mesh(self, requires_grad=False):
@@ -113,19 +111,18 @@ class ConvCRF(Layer):
 
         #features NCHW
         span=self.filter_size//2
-        #
         if self.blur>1:
             features=tf.keras.layers.AveragePooling2D((self.blur,self.blur),(self.blur,self.blur),padding='same',
                                                       data_format="channels_first")(features)
-        #
+            
         h=features.shape[2]
         w=features.shape[3]
 
         gaussian_filter_np=np.zeros([bs, self.filter_size, self.filter_size, h, w],dtype=np.float32)
-        #
+        
         for dx in range(-span,span+1):
             for dy in range(-span,span+1):
-                #
+                
                 dx1,dx2=_get_ind(dx)
                 dy1,dy2=_get_ind(dy)
 
@@ -150,7 +147,7 @@ class ConvCRF(Layer):
 
 
        #(1)input im2col,shape(bs,c,self.filter_size,self.filter_size,h,w)
-        #blur used to expand the receptive field
+       #blur used to expand the receptive field
         if self.blur>1:
             input=tf.keras.layers.AveragePooling2D((self.blur,self.blur),(self.blur,self.blur),
                                                    padding="SAME")(input)
@@ -164,9 +161,8 @@ class ConvCRF(Layer):
         #(bs,c,self.filter_size*filter_size,h,w)
         input_col =tf.reshape(input_col,(bs,h,w,c,self.filter_size*self.filter_size))
         input_col =tf.transpose(input_col,perm=[0,3,4,1,2])
-       #(3) features*gauss_filter(bs,c,self.filter_size,self.filter_size,h,w)
+        #features*gauss_filter(bs,c,self.filter_size,self.filter_size,h,w)
         product=input_col*filter
-       #product(bs,c,h,w)
         product=tf.reduce_sum(product,axis=2)
 
         return product
@@ -180,7 +176,6 @@ class ConvCRF(Layer):
 
         bs, h, w, c = input[0].shape
 
-        #mesh compute
 
         #Spatial filtering
         pos_feature = self.pos_feature(bs)
@@ -200,7 +195,6 @@ class ConvCRF(Layer):
         bilateral_norm=self.compute_gaussian(all_ones,bilateral_filter)
 
 
-        #
         for i in range(self.num_iterations):
 
             # Spatial filtering

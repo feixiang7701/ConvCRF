@@ -1,7 +1,7 @@
 
 
 import tensorflow as tf
-from tensorflow.python.keras.layers import  Layer
+from tensorflow.python.layers.base import Layer
 import numpy as np
 
 
@@ -61,21 +61,21 @@ class ConvCRF(Layer):
 
     def build(self, input_shape):
         # Weights of the spatial kernel
-        self.spatial_ker_weights = self.add_weight(name='spatial_ker_weights',
+        self.spatial_ker_weights = self.add_variable(name='spatial_ker_weights',
                                                    shape=(self.num_classes, self.num_classes),
                                                    dtype=tf.float32,
                                                    initializer=_diagonal_initializer,
                                                    trainable=True)
 
         # Weights of the bilateral kernel
-        self.bilateral_ker_weights = self.add_weight(name='bilateral_ker_weights',
+        self.bilateral_ker_weights = self.add_variable(name='bilateral_ker_weights',
                                                      shape=(self.num_classes, self.num_classes),
                                                      dtype=tf.float32,
                                                      initializer=_diagonal_initializer,
                                                      trainable=True)
 
         # Compatibility matrix
-        self.compatibility_matrix = self.add_weight(name='compatibility_matrix',
+        self.compatibility_matrix = self.add_variable(name='compatibility_matrix',
                                                     shape=(self.num_classes, self.num_classes),
                                                     dtype=tf.float32,
                                                     initializer=_potts_model_initializer,
@@ -194,15 +194,15 @@ class ConvCRF(Layer):
         spatial_norm=self.compute_gaussian(all_ones,spatial_filter)
         bilateral_norm=self.compute_gaussian(all_ones,bilateral_filter)
 
-
+        q_values = input[0] 
         for i in range(self.num_iterations):
-
+            softmax_out = tf.nn.softmax(q_values, 0)
             # Spatial filtering
-            spatial_out = self.compute_gaussian(all_ones,spatial_filter)
+            spatial_out = self.compute_gaussian(softmax_out,spatial_filter)
             spatial_out = spatial_out / (spatial_norm+1e-20)
 
             # Bilateral filtering
-            bilateral_out =self.compute_gaussian(all_ones,spatial_filter)
+            bilateral_out =self.compute_gaussian(softmax_out,bilateral_filter)
             bilateral_out = bilateral_out / (bilateral_norm+1e-20)
 
             # Weighting filter outputs
